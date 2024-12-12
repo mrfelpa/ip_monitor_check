@@ -1,0 +1,4 @@
+requests 
+smtplib 
+rich 
+subprocess 
