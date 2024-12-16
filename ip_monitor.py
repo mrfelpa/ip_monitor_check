@@ -13,7 +13,11 @@ from rich.live import Live
 from rich.align import Align
 
 CHECK_INTERVAL = 300  # Interval for IP check in seconds (5 minutes)
-IP_CHECK_URL = "https://api.ipify.org?format=json"
+IP_CHECK_URLS = [
+    "https://api.ipify.org?format=json",
+    "https://api.myip.com",
+    "https://checkip.amazonaws.com"
+]
 NOTIFICATION_EMAIL = {
     "enabled": True,
     "smtp_server": "smtp.example.com",
@@ -31,6 +35,7 @@ COMMAND_EXECUTION = {
     "enabled": True,
     "command": "echo IP address has changed!"
 }
+LOG_FILE = 'ip_change_log.txt'
 
 console = Console()
 
@@ -58,18 +63,20 @@ class IPMonitorGUI:
             notifications = "None"
             if current_ip and current_ip != self.last_ip:
                 notifications = self.handle_notifications(current_ip)
+                self.log_ip_change(self.last_ip, current_ip)
                 self.last_ip = current_ip
             self.update_status(current_ip, notifications)
             time.sleep(CHECK_INTERVAL)
 
     def get_external_ip(self):
-        try:
-            response = requests.get(IP_CHECK_URL, timeout=10)
-            response.raise_for_status()
-            return response.json().get("ip")
-        except requests.RequestException as e:
-            console.print(f"[red]Error fetching external IP: {e}")
-            return None
+        for url in IP_CHECK_URLS:
+            try:
+                response = requests.get(url, timeout=10)
+                response.raise_for_status()
+                return response.json().get("ip")
+            except requests.RequestException as e:
+                console.print(f"[red]Error fetching external IP from {url}: {e}")
+        return None
 
     def handle_notifications(self, new_ip):
         notifications = []
@@ -96,6 +103,10 @@ class IPMonitorGUI:
                 console.print(f"[red]Error executing command: {e}")
 
         return ", ".join(notifications)
+
+    def log_ip_change(self, old_ip, new_ip):
+        with open(LOG_FILE, 'a') as log_file:
+            log_file.write(f"IP changed from {old_ip} to {new_ip} at {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
 
     def send_email_notification(self, new_ip):
         msg = MIMEMultipart()
