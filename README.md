@@ -48,7 +48,7 @@ Python 3.7+
 
 # Future improvements
 
-- [ ] Add IP Address Identifier (Old and New)
-- [ ] Add support for multiple IP check APIs
-- [ ] Implement change log
+- [X] Add IP Address Identifier (Old and New)
+- [X] Add support for multiple IP check APIs
+- [X] Implement change log
 - [ ] Create daemon/service for continuous execution
